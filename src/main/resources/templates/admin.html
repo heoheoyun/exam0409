@@ -17,10 +17,9 @@
 
 <div class="container">
 
-    <!-- 전체 회원 계좌 목록 -->
     <div class="card">
         <h2>전체 회원 계좌 목록</h2>
-        <button type="button" class="btn btn-primary" onclick="getAllAccounts()">새로고침</button>
+        <button type="button" class="btn btn-primary" onclick="loadPage(currentPage)">새로고침</button>
         <br><br>
         <table>
             <thead>
@@ -37,11 +36,16 @@
         </table>
         <p class="total-balance">잔액 총합: <span id="totalBalance">-</span></p>
         <p id="freezeMessage" class="msg-success"></p>
+
+        <!-- 페이지네이션 -->
+        <div id="pagination" class="pagination"></div>
     </div>
 
 </div>
 
 <script th:inline="javascript">
+    let currentPage = 1;
+
     function authHeader() {
         const token = localStorage.getItem('token');
         if (!token) return { 'Content-Type': 'application/json' };
@@ -51,32 +55,78 @@
         };
     }
 
-    function getAllAccounts() {
-        fetch('/api/admin/accounts', { headers: authHeader() })
+    // 페이지 로드
+    function loadPage(page) {
+        currentPage = page;
+        fetch('/api/admin/accounts?page=' + page, { headers: authHeader() })
         .then(res => res.json())
-        .then(list => {
-            const tbody = document.getElementById('accountList');
-            tbody.innerHTML = '';
-            let total = 0;
-            list.forEach(a => {
-                const tr = document.createElement('tr');
-                const badge = a.frozen
-                    ? '<span class="badge-frozen">동결</span>'
-                    : '<span class="badge-normal">정상</span>';
-                tr.innerHTML = '<td>' + a.accountId + '</td>'
-                             + '<td>' + a.username + '</td>'
-                             + '<td>' + a.accountNumber + '</td>'
-                             + '<td>' + a.balance.toLocaleString() + '원</td>'
-                             + '<td>' + badge + '</td>'
-                             + '<td>'
-                             + '<button class="btn btn-danger btn-sm" onclick="freeze(' + a.accountId + ')">동결</button> '
-                             + '<button class="btn btn-success btn-sm" onclick="unfreeze(' + a.accountId + ')">해제</button>'
-                             + '</td>';
-                tbody.appendChild(tr);
-                total += a.balance;
-            });
-            document.getElementById('totalBalance').innerText = total.toLocaleString() + '원';
+        .then(data => {
+            renderTable(data.accounts);
+            renderPagination(data.pageHandler);
+            document.getElementById('totalBalance').innerText = data.totalBalance.toLocaleString() + '원';
         });
+    }
+
+    // 테이블 렌더링
+    function renderTable(accounts) {
+        const tbody = document.getElementById('accountList');
+        tbody.innerHTML = '';
+        accounts.forEach(a => {
+            const badge = a.frozen
+                ? '<span class="badge-frozen">동결</span>'
+                : '<span class="badge-normal">정상</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td>' + a.accountId + '</td>'
+                         + '<td>' + a.username + '</td>'
+                         + '<td>' + a.accountNumber + '</td>'
+                         + '<td>' + a.balance.toLocaleString() + '원</td>'
+                         + '<td>' + badge + '</td>'
+                         + '<td>'
+                         + '<button class="btn btn-danger btn-sm" onclick="freeze(' + a.accountId + ')">동결</button> '
+                         + '<button class="btn btn-success btn-sm" onclick="unfreeze(' + a.accountId + ')">해제</button>'
+                         + '</td>';
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 페이지네이션 렌더링
+    function renderPagination(ph) {
+        const div = document.getElementById('pagination');
+        div.innerHTML = '';
+
+        if (ph.totalPage <= 1) return;
+
+        if (ph.showPrev) {
+            const a = document.createElement('a');
+            a.href = '#';
+            a.innerText = '<<';
+            a.onclick = () => loadPage(ph.beginPage - 1);
+            div.appendChild(a);
+        }
+
+        for (let i = ph.beginPage; i <= ph.endPage; i++) {
+            if (i === ph.page) {
+                const strong = document.createElement('strong');
+                strong.innerText = i;
+                div.appendChild(strong);
+            } else {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.innerText = i;
+                a.onclick = (function(page) {
+                    return () => loadPage(page);
+                })(i);
+                div.appendChild(a);
+            }
+        }
+
+        if (ph.showNext) {
+            const a = document.createElement('a');
+            a.href = '#';
+            a.innerText = '>>';
+            a.onclick = () => loadPage(ph.endPage + 1);
+            div.appendChild(a);
+        }
     }
 
     function freeze(accountId) {
@@ -89,7 +139,7 @@
             if (res.ok) {
                 msg.className = 'msg-success';
                 msg.innerText = '동결 완료';
-                getAllAccounts();
+                loadPage(currentPage);
             } else {
                 msg.className = 'msg-error';
                 msg.innerText = '동결에 실패했습니다.';
@@ -107,7 +157,7 @@
             if (res.ok) {
                 msg.className = 'msg-success';
                 msg.innerText = '동결 해제 완료';
-                getAllAccounts();
+                loadPage(currentPage);
             } else {
                 msg.className = 'msg-error';
                 msg.innerText = '동결 해제에 실패했습니다.';
@@ -120,7 +170,7 @@
         window.location.href = '/login';
     }
 
-    getAllAccounts();
+    loadPage(1);
 </script>
 
 </body>

@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.dto.response.AccountResponseDto;
-import com.example.dto.response.MemberAccountResponseDto;
+import com.example.dto.response.PagedAccountResponseDto;
 import com.example.service.AdminService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,10 +29,11 @@ public class AdminController {
 		return ResponseEntity.ok(adminService.getAllMembers());
 	}
 
-	// 전체 회원 계좌 및 잔액 목록 조회
+	// 전체 회원 계좌 목록 페이지네이션 조회
 	@GetMapping("/accounts")
-	public ResponseEntity<List<MemberAccountResponseDto>> getAllAccounts() {
-		return ResponseEntity.ok(adminService.getAllAccounts());
+	public ResponseEntity<PagedAccountResponseDto> getAccountsPage(
+			@RequestParam(name = "page", defaultValue = "1") int page) {
+		return ResponseEntity.ok(adminService.getAccountsPage(page));
 	}
 
 	// 전체 계좌 잔액 총합 조회
