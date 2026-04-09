@@ -1,57 +1,68 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
     <title>뱅킹 서비스</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 
-<a href="/">홈</a> | <a href="#" onclick="logout()">로그아웃</a>
+<nav>
+    <a class="nav-brand" href="/">은행 시스템</a>
+    <div class="nav-links">
+        <a href="/">홈</a>
+        <a href="#" onclick="logout()">로그아웃</a>
+    </div>
+</nav>
 
-<h1>뱅킹 서비스</h1>
+<div class="container">
 
-<hr>
+    <!-- 내 계좌 조회 -->
+    <div class="card">
+        <h2>내 계좌 조회</h2>
+        <div id="accountInfo" class="account-info">
+            <span>계좌번호:</span> <span id="accountNumber">-</span><br>
+            <span>잔액:</span> <span id="balance">-</span>
+        </div>
+        <br>
+        <button type="button" class="btn btn-primary" onclick="getAccount()">새로고침</button>
+    </div>
 
-<h2>내 계좌 조회</h2>
-<button type="button" onclick="getAccount()">조회</button>
-<div id="accountInfo"></div>
+    <!-- 입금 -->
+    <div class="card">
+        <h2>입금</h2>
+        <div class="form-inline">
+            <input type="number" id="depositAmount" placeholder="입금액 입력">
+            <button type="button" class="btn btn-success" onclick="deposit()">입금</button>
+        </div>
+        <p id="depositMessage" class="msg-error"></p>
+    </div>
 
-<hr>
+    <!-- 송금 -->
+    <div class="card">
+        <h2>송금</h2>
+        <div class="form-group">
+            <label>수신 계좌번호</label>
+            <input type="text" id="receiverAccount" placeholder="계좌번호 입력">
+        </div>
+        <div class="form-inline">
+            <input type="number" id="transferAmount" placeholder="송금액 입력">
+            <button type="button" class="btn btn-primary" onclick="transfer()">송금</button>
+        </div>
+        <p id="transferMessage" class="msg-error"></p>
+    </div>
 
-<h2>입금</h2>
-<div>
-    <label>금액: </label>
-    <input type="number" id="depositAmount" placeholder="입금액 입력">
-    <button type="button" onclick="deposit()">입금</button>
+    <!-- 거래 내역 -->
+    <div class="card">
+        <h2>최근 거래 내역 (최근 5건)</h2>
+        <button type="button" class="btn btn-primary" onclick="getHistory()">조회</button>
+        <br><br>
+        <ul id="historyList" class="history-list"></ul>
+    </div>
+
 </div>
-<p id="depositMessage" style="color:red"></p>
 
-<hr>
-
-<h2>송금</h2>
-<div>
-    <label>수신 계좌번호: </label>
-    <input type="text" id="receiverAccount" placeholder="계좌번호 입력">
-</div>
-<div>
-    <label>금액: </label>
-    <input type="number" id="transferAmount" placeholder="송금액 입력">
-    <button type="button" onclick="transfer()">송금</button>
-</div>
-<p id="transferMessage" style="color:red"></p>
-
-<hr>
-
-<h2>최근 거래 내역 (최근 5건)</h2>
-<button type="button" onclick="getHistory()">조회</button>
-<ul id="historyList"></ul>
-
-<script>
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.role === 'ADMIN') {
-            window.location.href = '/admin';
-        }
-
+<script th:inline="javascript">
     function authHeader() {
         const token = localStorage.getItem('token');
         if (!token) return { 'Content-Type': 'application/json' };
@@ -65,8 +76,8 @@
         fetch('/api/banking/account', { headers: authHeader() })
         .then(res => res.json())
         .then(data => {
-            document.getElementById('accountInfo').innerHTML =
-                '계좌번호: ' + data.accountNumber + '<br>잔액: ' + data.balance + '원';
+            document.getElementById('accountNumber').innerText = data.accountNumber;
+            document.getElementById('balance').innerText = data.balance.toLocaleString() + '원';
         });
     }
 
@@ -80,6 +91,7 @@
         .then(res => {
             if (res.ok) {
                 document.getElementById('depositMessage').innerText = '';
+                document.getElementById('depositAmount').value = '';
                 getAccount();
             } else if (res.status === 401) {
                 document.getElementById('depositMessage').innerText = '로그인이 필요합니다.';
@@ -102,10 +114,12 @@
         .then(res => {
             if (res.ok) {
                 document.getElementById('transferMessage').innerText = '';
+                document.getElementById('receiverAccount').value = '';
+                document.getElementById('transferAmount').value = '';
                 getAccount();
             } else if (res.status === 401) {
                 document.getElementById('transferMessage').innerText = '로그인이 필요합니다.';
-            } else if (res.status === 400) {
+            } else {
                 res.text().then(msg => {
                     if (msg.includes('잔액')) {
                         document.getElementById('transferMessage').innerText = '잔액이 부족합니다.';
@@ -127,9 +141,13 @@
         .then(list => {
             const ul = document.getElementById('historyList');
             ul.innerHTML = '';
+            if (list.length === 0) {
+                ul.innerHTML = '<li>거래 내역이 없습니다.</li>';
+                return;
+            }
             list.forEach(tx => {
                 const li = document.createElement('li');
-                li.innerText = '[' + tx.type + '] ' + tx.amount + '원 | '
+                li.innerText = '[' + tx.type + '] ' + tx.amount.toLocaleString() + '원 | '
                     + '보낸계좌: ' + (tx.senderAccountNumber || '외부') + ' → '
                     + '받은계좌: ' + tx.receiverAccountNumber + ' | '
                     + tx.createdAt;
