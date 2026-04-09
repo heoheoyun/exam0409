@@ -48,6 +48,17 @@
 	<ul id="historyList"></ul>
 
 	<script>
+    // 페이지 로드 시 role 확인
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.role === 'ADMIN') {
+            window.location.href = '/admin';
+        }
+    }
+
     function authHeader() {
         const token = localStorage.getItem('token');
         if (!token) return { 'Content-Type': 'application/json' };

@@ -34,6 +34,17 @@
 	<p id="freezeMessage"></p>
 
 	<script>
+    // 페이지 로드 시 role 확인
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/login';
+    } else {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.role === 'USER') {
+            window.location.href = '/banking';
+        }
+    }
+
     function authHeader() {
         const token = localStorage.getItem('token');
         if (!token) return { 'Content-Type': 'application/json' };
@@ -41,16 +52,6 @@
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + token
         };
-    }
-
-    function showResult(res, successMsg) {
-        if (res.ok) {
-            document.getElementById('freezeMessage').innerText = successMsg;
-        } else {
-            res.text().then(msg => {
-                document.getElementById('freezeMessage').innerText = msg;
-            });
-        }
     }
 
     function getAllAccounts() {
@@ -66,7 +67,7 @@
                              + '<td>' + a.username + '</td>'
                              + '<td>' + a.accountNumber + '</td>'
                              + '<td>' + a.balance + '원</td>'
-                             + '<td>' + (a.frozen ? '동결' : '정상') + '</td>'
+                             + '<td>' + (a.frozen ? '🔒 동결' : '✅ 정상') + '</td>'
                              + '<td>'
                              + '<button onclick="freeze(' + a.accountId + ')">동결</button> '
                              + '<button onclick="unfreeze(' + a.accountId + ')">해제</button>'
@@ -84,8 +85,12 @@
             headers: authHeader()
         })
         .then(res => {
-            showResult(res, '동결 완료');
-            if (res.ok) getAllAccounts();
+            if (res.ok) {
+                document.getElementById('freezeMessage').innerText = '동결 완료';
+                getAllAccounts();
+            } else {
+                document.getElementById('freezeMessage').innerText = '동결에 실패했습니다.';
+            }
         });
     }
 
@@ -95,8 +100,12 @@
             headers: authHeader()
         })
         .then(res => {
-            showResult(res, '동결 해제 완료');
-            if (res.ok) getAllAccounts();
+            if (res.ok) {
+                document.getElementById('freezeMessage').innerText = '동결 해제 완료';
+                getAllAccounts();
+            } else {
+                document.getElementById('freezeMessage').innerText = '동결 해제에 실패했습니다.';
+            }
         });
     }
 
