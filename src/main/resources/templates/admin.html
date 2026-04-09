@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>관리자 페이지</title>
+</head>
+<body>
+
+	<a href="/">홈</a> |
+	<a href="#" onclick="logout()">로그아웃</a>
+
+	<h1>관리자 페이지</h1>
+
+	<hr>
+
+	<h2>전체 회원 계좌 목록</h2>
+	<button type="button" onclick="getAllAccounts()">새로고침</button>
+	<table id="accountTable" border="1">
+		<thead>
+			<tr>
+				<th>계좌 ID</th>
+				<th>회원 아이디</th>
+				<th>계좌번호</th>
+				<th>잔액</th>
+				<th>상태</th>
+				<th>동결 관리</th>
+			</tr>
+		</thead>
+		<tbody id="accountList"></tbody>
+	</table>
+	<p>
+		잔액 총합: <span id="totalBalance"></span>
+	</p>
+	<p id="freezeMessage"></p>
+
+	<script>
+    function authHeader() {
+        const token = localStorage.getItem('token');
+        if (!token) return { 'Content-Type': 'application/json' };
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+        };
+    }
+
+    function showResult(res, successMsg) {
+        if (res.ok) {
+            document.getElementById('freezeMessage').innerText = successMsg;
+        } else {
+            res.text().then(msg => {
+                document.getElementById('freezeMessage').innerText = msg;
+            });
+        }
+    }
+
+    function getAllAccounts() {
+        fetch('/api/admin/accounts', { headers: authHeader() })
+        .then(res => res.json())
+        .then(list => {
+            const tbody = document.getElementById('accountList');
+            tbody.innerHTML = '';
+            let total = 0;
+            list.forEach(a => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + a.accountId + '</td>'
+                             + '<td>' + a.username + '</td>'
+                             + '<td>' + a.accountNumber + '</td>'
+                             + '<td>' + a.balance + '원</td>'
+                             + '<td>' + (a.frozen ? '동결' : '정상') + '</td>'
+                             + '<td>'
+                             + '<button onclick="freeze(' + a.accountId + ')">동결</button> '
+                             + '<button onclick="unfreeze(' + a.accountId + ')">해제</button>'
+                             + '</td>';
+                tbody.appendChild(tr);
+                total += a.balance;
+            });
+            document.getElementById('totalBalance').innerText = total + '원';
+        });
+    }
+
+    function freeze(accountId) {
+        fetch('/api/admin/account/' + accountId + '/freeze', {
+            method: 'POST',
+            headers: authHeader()
+        })
+        .then(res => {
+            showResult(res, '동결 완료');
+            if (res.ok) getAllAccounts();
+        });
+    }
+
+    function unfreeze(accountId) {
+        fetch('/api/admin/account/' + accountId + '/unfreeze', {
+            method: 'POST',
+            headers: authHeader()
+        })
+        .then(res => {
+            showResult(res, '동결 해제 완료');
+            if (res.ok) getAllAccounts();
+        });
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    }
+
+    getAllAccounts();
+</script>
+
+</body>
+</html>

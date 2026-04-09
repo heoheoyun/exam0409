@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>은행 시스템</title>
+</head>
+<body>
+
+	<h1>은행 시스템</h1>
+
+	<div id="guestMenu">
+		<a href="/login">로그인</a> | <a href="/register">회원가입</a>
+	</div>
+
+	<div id="userMenu" style="display: none">
+		<a href="/banking">뱅킹 서비스</a> | <a href="/admin">관리자 페이지</a> | <a
+			href="#" onclick="logout()">로그아웃</a>
+	</div>
+
+	<script>
+		if (localStorage.getItem('token')) {
+			document.getElementById('guestMenu').style.display = 'none';
+			document.getElementById('userMenu').style.display = 'block';
+		}
+
+		function logout() {
+			localStorage.removeItem('token');
+			window.location.href = '/login';
+		}
+	</script>
+
+</body>
+</html>
