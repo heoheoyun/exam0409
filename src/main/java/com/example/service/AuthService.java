@@ -1,7 +1,5 @@
 package com.example.service;
 
-import java.util.UUID;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +39,10 @@ public class AuthService {
 		memberRepository.save(member);
 
 		Account account = new Account();
-		account.setAccountNumber(UUID.randomUUID().toString().substring(0, 12));
+		// 계좌번호 형식: 000-0000-0000
+		String accountNumber = String.format("%03d-%04d-%04d", (int) (Math.random() * 900) + 100,
+				(int) (Math.random() * 9000) + 1000, (int) (Math.random() * 9000) + 1000);
+		account.setAccountNumber(accountNumber);
 		account.setMember(member);
 		accountRepository.save(account);
 	}

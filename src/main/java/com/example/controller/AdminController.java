@@ -32,7 +32,7 @@ public class AdminController {
 	// 전체 회원 계좌 목록 페이지네이션 조회
 	@GetMapping("/accounts")
 	public ResponseEntity<PagedAccountResponseDto> getAccountsPage(
-			@RequestParam(name = "page", defaultValue = "1") int page) {
+			@RequestParam(defaultValue = "1") int page) {
 		return ResponseEntity.ok(adminService.getAccountsPage(page));
 	}
 
@@ -44,13 +44,13 @@ public class AdminController {
 
 	// 특정 계좌 동결
 	@PostMapping("/account/{accountId}/freeze")
-	public ResponseEntity<AccountResponseDto> freeze(@PathVariable("accountId") Long accountId) {
+	public ResponseEntity<AccountResponseDto> freeze(@PathVariable Long accountId) {
 		return ResponseEntity.ok(adminService.freeze(accountId));
 	}
 
 	// 특정 계좌 동결 해제
 	@PostMapping("/account/{accountId}/unfreeze")
-	public ResponseEntity<AccountResponseDto> unfreeze(@PathVariable("accountId") Long accountId) {
+	public ResponseEntity<AccountResponseDto> unfreeze(@PathVariable Long accountId) {
 		return ResponseEntity.ok(adminService.unfreeze(accountId));
 	}
 }
