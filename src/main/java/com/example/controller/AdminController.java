@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.dto.response.AccountResponseDto;
@@ -30,9 +29,8 @@ public class AdminController {
 	}
 
 	// 전체 회원 계좌 목록 페이지네이션 조회
-	@GetMapping("/accounts")
-	public ResponseEntity<PagedAccountResponseDto> getAccountsPage(
-			@RequestParam(defaultValue = "1") int page) {
+	@GetMapping("/accounts/{page}")
+	public ResponseEntity<PagedAccountResponseDto> getAccountsPage(@PathVariable int page) {
 		return ResponseEntity.ok(adminService.getAccountsPage(page));
 	}
 
