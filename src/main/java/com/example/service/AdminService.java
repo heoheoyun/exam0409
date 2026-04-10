@@ -36,7 +36,6 @@ public class AdminService {
 
 	// 전체 회원 계좌 목록 페이지네이션 조회
 	public PagedAccountResponseDto getAccountsPage(int page) {
-		// 유효하지 않은 page 값 보정
 		if (page < 1)
 			page = 1;
 
@@ -46,7 +45,7 @@ public class AdminService {
 		List<MemberAccountResponseDto> accounts = accountPage.getContent().stream().map(MemberAccountResponseDto::new)
 				.collect(Collectors.toList());
 
-		// findAll() 중복 호출 제거 - 페이지 조회 결과에서 총합 계산
+		// 페이지 결과에서 총합 계산 (findAll 중복 호출 방지)
 		long totalBalance = accountPage.getContent().stream().mapToLong(Account::getBalance).sum();
 
 		PageHandler pageHandler = new PageHandler((int) accountPage.getTotalElements(), page, PAGE_SIZE);
@@ -62,7 +61,8 @@ public class AdminService {
 	// 특정 계좌 동결
 	@Transactional
 	public AccountResponseDto freeze(Long accountId) {
-		Account account = accountRepository.findById(accountId).orElseThrow();
+		Account account = accountRepository.findById(accountId)
+				.orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
 		account.setFrozen(true);
 		accountRepository.save(account);
 		return new AccountResponseDto(account);
@@ -71,7 +71,8 @@ public class AdminService {
 	// 특정 계좌 동결 해제
 	@Transactional
 	public AccountResponseDto unfreeze(Long accountId) {
-		Account account = accountRepository.findById(accountId).orElseThrow();
+		Account account = accountRepository.findById(accountId)
+				.orElseThrow(() -> new RuntimeException("계좌를 찾을 수 없습니다."));
 		account.setFrozen(false);
 		accountRepository.save(account);
 		return new AccountResponseDto(account);

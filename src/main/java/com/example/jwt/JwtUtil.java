@@ -48,12 +48,12 @@ public class JwtUtil {
 		return parseClaims(token).getSubject();
 	}
 
-	// 토큰에서 role 추출 
+	// 토큰에서 role 추출
 	public String getRole(String token) {
 		return parseClaims(token).get("role", String.class);
 	}
 
-	// 토큰 유효성 검증 
+	// 토큰 유효성 검증
 	public boolean validateToken(String token) {
 		try {
 			parseClaims(token);

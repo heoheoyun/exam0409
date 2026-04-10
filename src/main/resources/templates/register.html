@@ -48,18 +48,17 @@
 </div>
 
 <script th:inline="javascript">
+    // 회원가입 - 성공 시 로그인 페이지로 이동
     function register() {
-        const data = {
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value,
-            name: document.getElementById('name').value,
-            role: document.getElementById('role').value
-        };
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const name = document.getElementById('name').value;
+        const role = document.getElementById('role').value;
 
         fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ username, password, name, role })
         })
         .then(res => {
             if (!res.ok) {

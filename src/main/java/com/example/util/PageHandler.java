@@ -8,25 +8,25 @@ import lombok.ToString;
 @ToString
 public class PageHandler {
 
-    private int totalCount;
-    private int pageSize;
-    private int naviSize = 5;
-    private int totalPage;
-    private int page;
-    private int beginPage;
-    private int endPage;
-    private boolean showPrev;
-    private boolean showNext;
+	private int totalCount;
+	private int pageSize;
+	private int naviSize = 5;
+	private int totalPage;
+	private int page;
+	private int beginPage;
+	private int endPage;
+	private boolean showPrev;
+	private boolean showNext;
 
-    public PageHandler(int totalCount, int page, int pageSize) {
-        this.totalCount = totalCount;
-        this.page = page;
-        this.pageSize = pageSize;
+	public PageHandler(int totalCount, int page, int pageSize) {
+		this.totalCount = totalCount;
+		this.page = page;
+		this.pageSize = pageSize;
 
-        this.totalPage = (int) Math.ceil(totalCount / (double) pageSize);
-        this.beginPage = (page - 1) / naviSize * naviSize + 1;
-        this.endPage = Math.min(beginPage + naviSize - 1, totalPage);
-        this.showPrev = beginPage != 1;
-        this.showNext = endPage != totalPage;
-    }
+		this.totalPage = (int) Math.ceil(totalCount / (double) pageSize);
+		this.beginPage = (page - 1) / naviSize * naviSize + 1;
+		this.endPage = Math.min(beginPage + naviSize - 1, totalPage);
+		this.showPrev = beginPage != 1;
+		this.showNext = endPage != totalPage;
+	}
 }

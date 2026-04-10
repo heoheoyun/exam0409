@@ -15,6 +15,7 @@ public class MemberDetailsService implements UserDetailsService {
 
 	private final MemberRepository memberRepository;
 
+	// Spring Security가 로그인 시 자동으로 호출 - username으로 회원 조회
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		return memberRepository.findByUsername(username).map(MemberDetails::new)

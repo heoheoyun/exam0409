@@ -33,6 +33,7 @@
 </div>
 
 <script th:inline="javascript">
+    // 토큰이 있으면 role에 따라 메뉴 표시
     const token = localStorage.getItem('token');
     if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -44,6 +45,7 @@
         }
     }
 
+    // 로그아웃
     function logout() {
         localStorage.removeItem('token');
         window.location.href = '/login';

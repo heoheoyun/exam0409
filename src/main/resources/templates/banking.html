@@ -35,7 +35,7 @@
             <input type="number" id="depositAmount" placeholder="입금액 입력">
             <button type="button" class="btn btn-success" onclick="deposit()">입금</button>
         </div>
-        <p id="depositMessage" class="msg-error"></p>
+        <p id="depositMessage"></p>
     </div>
 
     <!-- 송금 -->
@@ -49,7 +49,7 @@
             <input type="number" id="transferAmount" placeholder="송금액 입력">
             <button type="button" class="btn btn-primary" onclick="transfer()">송금</button>
         </div>
-        <p id="transferMessage" class="msg-error"></p>
+        <p id="transferMessage"></p>
     </div>
 
     <!-- 거래 내역 -->
@@ -63,99 +63,107 @@
 </div>
 
 <script th:inline="javascript">
+    // 인증 헤더 반환
     function authHeader() {
         const token = localStorage.getItem('token');
         if (!token) return { 'Content-Type': 'application/json' };
         return {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
+            'Authorization': `Bearer ${token}`
         };
     }
 
-    function getAccount() {
-        fetch('/api/banking/account', { headers: authHeader() })
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('accountNumber').innerText = data.accountNumber;
-            document.getElementById('balance').innerText = data.balance.toLocaleString() + '원';
-        });
+    // 메시지 표시 (성공/실패)
+    function showMessage(elementId, message, isSuccess) {
+        const el = document.getElementById(elementId);
+        el.className = isSuccess ? 'msg-success' : 'msg-error';
+        el.innerText = message;
     }
 
+    // 내 계좌 조회
+    function getAccount() {
+        fetch('/api/banking/account', { headers: authHeader() })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('accountNumber').innerText = data.accountNumber;
+                document.getElementById('balance').innerText = `${data.balance.toLocaleString()}원`;
+            });
+    }
+
+    // 입금
     function deposit() {
-        const data = { amount: Number(document.getElementById('depositAmount').value) };
+        const amount = Number(document.getElementById('depositAmount').value);
         fetch('/api/banking/deposit', {
             method: 'POST',
             headers: authHeader(),
-            body: JSON.stringify(data)
+            body: JSON.stringify({ amount })
         })
         .then(res => {
             if (res.ok) {
-                document.getElementById('depositMessage').innerText = '';
+                showMessage('depositMessage', '입금이 완료되었습니다.', true);
                 document.getElementById('depositAmount').value = '';
                 getAccount();
             } else if (res.status === 401) {
-                document.getElementById('depositMessage').innerText = '로그인이 필요합니다.';
+                showMessage('depositMessage', '로그인이 필요합니다.', false);
             } else {
-                document.getElementById('depositMessage').innerText = '입금에 실패했습니다.';
+                showMessage('depositMessage', '입금에 실패했습니다.', false);
             }
         });
     }
 
+    // 송금
     function transfer() {
-        const data = {
-            receiverAccountNumber: document.getElementById('receiverAccount').value,
-            amount: Number(document.getElementById('transferAmount').value)
-        };
+        const receiverAccountNumber = document.getElementById('receiverAccount').value;
+        const amount = Number(document.getElementById('transferAmount').value);
         fetch('/api/banking/transfer', {
             method: 'POST',
             headers: authHeader(),
-            body: JSON.stringify(data)
+            body: JSON.stringify({ receiverAccountNumber, amount })
         })
         .then(res => {
             if (res.ok) {
-                document.getElementById('transferMessage').innerText = '';
+                showMessage('transferMessage', '송금이 완료되었습니다.', true);
                 document.getElementById('receiverAccount').value = '';
                 document.getElementById('transferAmount').value = '';
                 getAccount();
             } else if (res.status === 401) {
-                document.getElementById('transferMessage').innerText = '로그인이 필요합니다.';
+                showMessage('transferMessage', '로그인이 필요합니다.', false);
             } else {
                 res.text().then(msg => {
                     if (msg.includes('잔액')) {
-                        document.getElementById('transferMessage').innerText = '잔액이 부족합니다.';
+                        showMessage('transferMessage', '잔액이 부족합니다.', false);
                     } else if (msg.includes('동결')) {
-                        document.getElementById('transferMessage').innerText = '동결된 계좌입니다.';
+                        showMessage('transferMessage', '동결된 계좌입니다.', false);
                     } else if (msg.includes('계좌번호')) {
-                        document.getElementById('transferMessage').innerText = '존재하지 않는 계좌번호입니다.';
+                        showMessage('transferMessage', '존재하지 않는 계좌번호입니다.', false);
                     } else {
-                        document.getElementById('transferMessage').innerText = '송금에 실패했습니다.';
+                        showMessage('transferMessage', '송금에 실패했습니다.', false);
                     }
                 });
             }
         });
     }
 
+    // 최근 거래 내역 5건 조회
     function getHistory() {
         fetch('/api/banking/history', { headers: authHeader() })
-        .then(res => res.json())
-        .then(list => {
-            const ul = document.getElementById('historyList');
-            ul.innerHTML = '';
-            if (list.length === 0) {
-                ul.innerHTML = '<li>거래 내역이 없습니다.</li>';
-                return;
-            }
-            list.forEach(tx => {
-                const li = document.createElement('li');
-                li.innerText = '[' + tx.type + '] ' + tx.amount.toLocaleString() + '원 | '
-                    + '보낸계좌: ' + (tx.senderAccountNumber || '외부') + ' → '
-                    + '받은계좌: ' + tx.receiverAccountNumber + ' | '
-                    + tx.createdAt;
-                ul.appendChild(li);
+            .then(res => res.json())
+            .then(list => {
+                const ul = document.getElementById('historyList');
+                ul.innerHTML = '';
+                if (list.length === 0) {
+                    ul.innerHTML = '<li>거래 내역이 없습니다.</li>';
+                    return;
+                }
+                list.forEach(tx => {
+                    const li = document.createElement('li');
+                    li.innerText = `[${tx.type}] ${tx.amount.toLocaleString()}원 | 보낸계좌: ${tx.senderAccountNumber || '외부'} → 받은계좌: ${tx.receiverAccountNumber} | ${tx.createdAt}`;
+                    ul.appendChild(li);
+                });
             });
-        });
     }
 
+    // 로그아웃
     function logout() {
         localStorage.removeItem('token');
         window.location.href = '/login';

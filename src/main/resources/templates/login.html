@@ -37,16 +37,15 @@
 </div>
 
 <script th:inline="javascript">
+    // 로그인 - 성공 시 role에 따라 페이지 이동
     function login() {
-        const data = {
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value
-        };
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
 
         fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: JSON.stringify({ username, password })
         })
         .then(res => {
             if (!res.ok) {

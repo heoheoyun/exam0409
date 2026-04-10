@@ -38,8 +38,8 @@ public class AuthService {
 		member.setRole(dto.getRole());
 		memberRepository.save(member);
 
-		Account account = new Account();
 		// 계좌번호 형식: 000-0000-0000
+		Account account = new Account();
 		String accountNumber = String.format("%03d-%04d-%04d", (int) (Math.random() * 900) + 100,
 				(int) (Math.random() * 9000) + 1000, (int) (Math.random() * 9000) + 1000);
 		account.setAccountNumber(accountNumber);
